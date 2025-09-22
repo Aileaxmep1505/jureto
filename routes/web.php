@@ -4,7 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Admin\UserManagementController;
-
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProviderController;
+use App\Http\Controllers\ClientController;
 /*
 |--------------------------------------------------------------------------
 | Invitados
@@ -72,4 +74,21 @@ Route::prefix('admin')->middleware(['auth', 'verified', 'approved', 'role:admin'
     Route::post('/users/{user}/revoke', [UserManagementController::class, 'revoke'])->name('admin.users.revoke');
     Route::post('/users/{user}/role', [UserManagementController::class, 'assignRole'])->name('admin.users.role.assign');
     Route::delete('/users/{user}/role/{role}', [UserManagementController::class, 'removeRole'])->name('admin.users.role.remove');
+});
+
+Route::middleware(['auth','approved'])->group(function () {
+    Route::resource('products', ProductController::class)->parameters(['products' => 'product']);
+});
+Route::middleware(['auth','approved'])->group(function () {
+    Route::resource('products', ProductController::class)->parameters(['products'=>'product']);
+    Route::get('products-export/pdf', [ProductController::class,'exportPdf'])->name('products.export.pdf');
+});
+Route::middleware(['auth','approved'])->group(function () {
+    Route::resource('providers', ProviderController::class)
+        ->names('providers'); // index, create, store, edit, update, destroy, show (no lo usamos)
+});
+
+
+Route::middleware(['auth','approved'])->group(function () {
+    Route::resource('clients', ClientController::class)->names('clients');
 });

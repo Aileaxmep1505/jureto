@@ -41,33 +41,63 @@
     </div>
 
     <nav class="nav">
+      <!-- Dashboard -->
       <a href="{{ route('dashboard') }}" class="nav__link {{ request()->routeIs('dashboard') ? 'is-active':'' }}">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M3 12l9-9 9 9"/><path d="M9 21V9h6v12"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
+          <path d="M3 12l9-9 9 9"/><path d="M9 21V9h6v12"/>
+        </svg>
         <span>Dashboard</span>
       </a>
 
+      <!-- Usuarios (solo admin) -->
       @role('admin')
       <a href="{{ route('admin.users.index') }}" class="nav__link {{ request()->routeIs('admin.users.*') ? 'is-active':'' }}">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
+          <path d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 00-3-3.87"/>
+          <path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
         <span>Usuarios</span>
       </a>
       @endrole
 
-      <a href="#" class="nav__link">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M12 1v22M1 12h22"/></svg>
-        <span>Enlace 1</span>
+      <!-- Productos (un solo enlace, sin submenú) -->
+      <a href="{{ route('products.index') }}" class="nav__link {{ request()->routeIs('products.*') ? 'is-active':'' }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
+          <rect x="3" y="4" width="18" height="14" rx="2"/>
+          <path d="M7 8h10M7 12h10M7 16h6"/>
+        </svg>
+        <span>Productos</span>
       </a>
 
-      <a href="#" class="nav__link">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        <span>Enlace 2</span>
+      <!-- Proveedores (un solo enlace) -->
+      <a href="{{ route('providers.index') }}" class="nav__link {{ request()->routeIs('providers.*') ? 'is-active':'' }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
+          <path d="M3 7h18l-2 10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3L3 7z"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+        <span>Proveedores</span>
+      </a>
+
+      <!-- Clientes (un solo enlace) -->
+      <a href="{{ route('clients.index') }}" class="nav__link {{ request()->routeIs('clients.*') ? 'is-active':'' }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>Clientes</span>
       </a>
     </nav>
 
     <form method="POST" action="{{ route('logout') }}" class="logout">
       @csrf
       <button type="submit" class="btn-logout">
-        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <path d="M16 17l5-5-5-5"/>
+          <path d="M21 12H9"/>
+        </svg>
         <span>Cerrar sesión</span>
       </button>
     </form>
@@ -80,7 +110,9 @@
   <div class="shell" id="shell">
     <header class="topbar">
       <button id="btnSidebar" class="icon-btn" aria-label="Abrir menú">
-        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
+          <path d="M3 6h18M3 12h18M3 18h18"/>
+        </svg>
       </button>
 
       <div class="topbar__title">@yield('header','Panel')</div>
@@ -90,7 +122,8 @@
         <div class="notif">
           <button id="btnNotif" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="Notificaciones">
             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-              <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"/><path d="M9 21h6"/>
+              <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"/>
+              <path d="M9 21h6"/>
             </svg>
             <span class="dot" aria-hidden="true"></span>
           </button>
@@ -99,7 +132,9 @@
             <div class="notif__head">
               <strong>Notificaciones</strong>
               <button id="btnCloseNotif" class="icon-btn" aria-label="Cerrar notificaciones">
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
               </button>
             </div>
             <div class="notif__list">
