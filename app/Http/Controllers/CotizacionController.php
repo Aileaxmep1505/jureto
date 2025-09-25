@@ -6,11 +6,13 @@ use App\Models\{Cotizacion, CotizacionProducto, CotizacionPlazo, Client, Product
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use PDF; // barryvdh/laravel-dompdf
 
 // IA + PDF
-use Smalot\PdfParser\Parser as PdfParser;
-use Symfony\Component\Process\Process;
+use Smalot\PdfParser\Parser as PdfParser;         // composer require smalot/pdfparser
+use Symfony\Component\Process\Process;            // viene con Laravel
 
 class CotizacionController extends Controller
 {
@@ -100,34 +102,34 @@ class CotizacionController extends Controller
         if (is_string($raw)) { $r->merge(['items' => json_decode($raw, true) ?? []]); }
 
         $data = $r->validate([
-            'cliente_id' => ['required','exists:clients,id'],
-            'notas' => ['nullable','string'],
-            'descuento' => ['nullable','numeric'],
-            'envio' => ['nullable','numeric'],
-            'validez_dias' => ['nullable','integer','min:0','max:365'],
+            'cliente_id'    => ['required','exists:clients,id'],
+            'notas'         => ['nullable','string'],
+            'descuento'     => ['nullable','numeric'],
+            'envio'         => ['nullable','numeric'],
+            'validez_dias'  => ['nullable','integer','min:0','max:365'],
 
-            'items' => ['required','array','min:1'],
-            'items.*.producto_id' => ['required','exists:products,id'],
-            'items.*.descripcion' => ['nullable','string'],
-            'items.*.cantidad' => ['required','numeric','min:0.01'],
-            'items.*.precio_unitario' => ['required','numeric','min:0'],
-            'items.*.descuento' => ['nullable','numeric','min:0'],
-            'items.*.iva_porcentaje' => ['nullable','numeric','min:0','max:100'],
+            'items'                     => ['required','array','min:1'],
+            'items.*.producto_id'       => ['required','exists:products,id'],
+            'items.*.descripcion'       => ['nullable','string'],
+            'items.*.cantidad'          => ['required','numeric','min:0.01'],
+            'items.*.precio_unitario'   => ['required','numeric','min:0'],
+            'items.*.descuento'         => ['nullable','numeric','min:0'],
+            'items.*.iva_porcentaje'    => ['nullable','numeric','min:0','max:100'],
 
             // Financiamiento (opcional)
-            'financiamiento.aplicar' => ['nullable','boolean'],
-            'financiamiento.numero_plazos' => ['nullable','integer','min:1','max:60'],
-            'financiamiento.enganche' => ['nullable','numeric','min:0'],
-            'financiamiento.tasa_anual' => ['nullable','numeric','min:0','max:200'],
-            'financiamiento.primer_vencimiento' => ['nullable','date'],
+            'financiamiento.aplicar'           => ['nullable','boolean'],
+            'financiamiento.numero_plazos'     => ['nullable','integer','min:1','max:60'],
+            'financiamiento.enganche'          => ['nullable','numeric','min:0'],
+            'financiamiento.tasa_anual'        => ['nullable','numeric','min:0','max:200'],
+            'financiamiento.primer_vencimiento'=> ['nullable','date'],
         ]);
 
         $cotizacion = DB::transaction(function() use ($data) {
             $cot = new Cotizacion();
-            $cot->cliente_id = $data['cliente_id'];
-            $cot->notas = $data['notas'] ?? null;
-            $cot->descuento = $data['descuento'] ?? 0;
-            $cot->envio = $data['envio'] ?? 0;
+            $cot->cliente_id   = $data['cliente_id'];
+            $cot->notas        = $data['notas'] ?? null;
+            $cot->descuento    = $data['descuento'] ?? 0;
+            $cot->envio        = $data['envio'] ?? 0;
             $cot->validez_dias = (int) ($data['validez_dias'] ?? 15);
             $cot->setValidez();
             $cot->save();
@@ -255,27 +257,27 @@ class CotizacionController extends Controller
         if (is_string($raw)) { $r->merge(['items' => json_decode($raw, true) ?? []]); }
 
         $data = $r->validate([
-            'cliente_id' => ['required','exists:clients,id'],
-            'notas' => ['nullable','string'],
-            'descuento' => ['nullable','numeric'],
-            'envio' => ['nullable','numeric'],
-            'validez_dias' => ['nullable','integer','min:0','max:365'],
+            'cliente_id'    => ['required','exists:clients,id'],
+            'notas'         => ['nullable','string'],
+            'descuento'     => ['nullable','numeric'],
+            'envio'         => ['nullable','numeric'],
+            'validez_dias'  => ['nullable','integer','min:0','max:365'],
 
-            'items' => ['required','array','min:1'],
-            'items.*.producto_id' => ['required','exists:products,id'],
-            'items.*.descripcion' => ['nullable','string'],
-            'items.*.cantidad' => ['required','numeric','min:0.01'],
-            'items.*.precio_unitario' => ['required','numeric','min:0'],
-            'items.*.descuento' => ['nullable','numeric','min:0'],
-            'items.*.iva_porcentaje' => ['nullable','numeric','min:0','max:100'],
+            'items'                     => ['required','array','min:1'],
+            'items.*.producto_id'       => ['required','exists:products,id'],
+            'items.*.descripcion'       => ['nullable','string'],
+            'items.*.cantidad'          => ['required','numeric','min:0.01'],
+            'items.*.precio_unitario'   => ['required','numeric','min:0'],
+            'items.*.descuento'         => ['nullable','numeric','min:0'],
+            'items.*.iva_porcentaje'    => ['nullable','numeric','min:0','max:100'],
         ]);
 
         DB::transaction(function() use ($cotizacion, $data) {
             $cotizacion->update([
-                'cliente_id' => $data['cliente_id'],
-                'notas' => $data['notas'] ?? null,
-                'descuento' => $data['descuento'] ?? 0,
-                'envio' => $data['envio'] ?? 0,
+                'cliente_id'   => $data['cliente_id'],
+                'notas'        => $data['notas'] ?? null,
+                'descuento'    => $data['descuento'] ?? 0,
+                'envio'        => $data['envio'] ?? 0,
                 'validez_dias' => (int) ($data['validez_dias'] ?? 15),
             ]);
             $cotizacion->setValidez();
@@ -418,58 +420,68 @@ class CotizacionController extends Controller
             'pdf' => ['required','file','mimes:pdf','max:20480'], // 20MB
         ]);
 
-        // 1) Extraer texto por páginas (OCR si hace falta)
-        [$pages, $wasOcred] = $this->extractPdfPagesText($r->file('pdf')->getRealPath());
-
-        // Previews de páginas para el meta-análisis
-        $pageSummaries = [];
-        foreach ($pages as $i => $txt) {
-            $t = trim(preg_replace('/\s+/u', ' ', $txt));
-            $pageSummaries[] = [
-                'index'   => $i + 1,
-                'preview' => mb_substr($t, 0, 1200),
-                'length'  => mb_strlen($t),
-            ];
+        // Verificación explícita de la API key
+        if (!env('OPENAI_API_KEY')) {
+            Log::warning('OPENAI_API_KEY no configurado');
+            return response()->json([
+                'ok'    => false,
+                'error' => 'OPENAI_API_KEY no configurado en .env',
+            ], 422);
         }
 
-        // 2) Paso A: IA decide qué páginas son relevantes
-        $findPrompt = json_encode([
-            'task' => 'find_relevant_pages',
-            'instruction' => 'Eres muy estricto. Devuelve solo JSON.',
-            'document_type_hint' => 'licitaciones, requisiciones, pedidos, cotizaciones, órdenes de compra del gobierno y sector privado',
-            'pages' => $pageSummaries,
-            'want' => ['pages_with_items','pages_with_totals','pages_with_terms','pages_with_client'],
-            'notes' => 'Ignora bases legales, anexos, carátulas, firmas.',
-        ], JSON_UNESCAPED_UNICODE);
+        try {
+            // 1) Extraer texto por páginas (OCR si hace falta)
+            [$pages, $wasOcred] = $this->extractPdfPagesText($r->file('pdf')->getRealPath());
 
-        $findJson = $this->callOpenAIJson(<<<PROMPT
+            // Previews para el meta-análisis
+            $pageSummaries = [];
+            foreach ($pages as $i => $txt) {
+                $t = trim(preg_replace('/\s+/u', ' ', $txt));
+                $pageSummaries[] = [
+                    'index'   => $i + 1,
+                    'preview' => mb_substr($t, 0, 1200),
+                    'length'  => mb_strlen($t),
+                ];
+            }
+
+            // 2) IA decide qué páginas son relevantes
+            $findPrompt = json_encode([
+                'task' => 'find_relevant_pages',
+                'instruction' => 'Eres muy estricto. Devuelve solo JSON.',
+                'document_type_hint' => 'licitaciones, requisiciones, pedidos, cotizaciones, órdenes de compra del gobierno y sector privado',
+                'pages' => $pageSummaries,
+                'want' => ['pages_with_items','pages_with_totals','pages_with_terms','pages_with_client'],
+                'notes' => 'Ignora bases legales, anexos, carátulas, firmas.',
+            ], JSON_UNESCAPED_UNICODE);
+
+            $findJson = $this->callOpenAIJson(<<<PROMPT
 Analiza el índice de páginas (preview). Devuelve SOLO JSON:
 {
-  "relevant_pages": [número de página (1-based), ...], 
+  "relevant_pages": [número de página (1-based), ...],
   "reasoning": string
 }
 ÍNDICE:
 {$findPrompt}
 PROMPT);
 
-        $find = $this->safeJson($findJson);
-        $relevantPages = array_values(array_unique(array_filter($find['relevant_pages'] ?? [], fn($n) => is_int($n) && $n >= 1 && $n <= count($pages))));
-        if (empty($relevantPages)) {
-            $relevantPages = range(1, min(count($pages), 8)); // fallback
-        }
-
-        // 3) Corpus solo con páginas relevantes
-        $joined = [];
-        foreach ($relevantPages as $pn) {
-            $txt = trim($pages[$pn - 1] ?? '');
-            if ($txt !== '') {
-                $joined[] = "=== PAGINA {$pn} ===\n" . mb_substr($txt, 0, 20000);
+            $find = $this->safeJson($findJson);
+            $relevantPages = array_values(array_unique(array_filter($find['relevant_pages'] ?? [], fn($n) => is_int($n) && $n >= 1 && $n <= count($pages))));
+            if (empty($relevantPages)) {
+                $relevantPages = range(1, min(count($pages), 8)); // fallback
             }
-        }
-        $corpus = mb_substr(implode("\n\n", $joined), 0, 90000);
 
-        // 4) Paso B: extracción estructurada
-        $extractPrompt = <<<PR
+            // 3) Corpus solo con páginas relevantes
+            $joined = [];
+            foreach ($relevantPages as $pn) {
+                $txt = trim($pages[$pn - 1] ?? '');
+                if ($txt !== '') {
+                    $joined[] = "=== PAGINA {$pn} ===\n" . mb_substr($txt, 0, 20000);
+                }
+            }
+            $corpus = mb_substr(implode("\n\n", $joined), 0, 90000);
+
+            // 4) Extracción estructurada
+            $extractPrompt = <<<PR
 Eres un extractor experto en documentos de compra y licitaciones.
 Devuelve SOLO JSON con este esquema:
 
@@ -495,7 +507,7 @@ Devuelve SOLO JSON con este esquema:
  ],
  "campos_detectados": { "paginas": [número], "observaciones": string|null }
 }
-Reglas: si dice "IVA incluido", intenta normalizar a precio sin IVA (MXN 16% por defecto). 
+Reglas: si dice "IVA incluido", intenta normalizar a precio sin IVA (MXN 16% por defecto).
 Usa punto decimal. Ignora encabezados y subtotales intermedios.
 
 TEXTO RELEVANTE:
@@ -504,72 +516,105 @@ TEXTO RELEVANTE:
 ---
 PR;
 
-        $extractJson = $this->callOpenAIJson($extractPrompt);
-        $parsed = $this->safeJson($extractJson);
+            $extractJson = $this->callOpenAIJson($extractPrompt);
+            $parsed = $this->safeJson($extractJson);
 
-        // 5) Empatar con clientes y productos locales
-        $clienteId = $this->matchClientId($parsed['cliente_nombre'] ?? null, $parsed['cliente_email'] ?? null, $parsed['cliente_telefono'] ?? null);
+            // 5) Empatar con clientes y productos locales
+            $clienteId = $this->matchClientId($parsed['cliente_nombre'] ?? null, $parsed['cliente_email'] ?? null, $parsed['cliente_telefono'] ?? null);
 
-        $itemsInput = [];
-        $ivaDefault = 16;
-        $items = is_array($parsed['items'] ?? null) ? $parsed['items'] : [];
-        foreach ($items as $row) {
-            $name = (string)($row['nombre'] ?? ($row['descripcion'] ?? ''));
-            $prod = $this->matchProduct($name);
-            $itemsInput[] = [
-                'producto_id'     => $prod?->id,
-                'descripcion'     => $row['descripcion'] ?? $name,
-                'cantidad'        => (float)($row['cantidad'] ?? 1),
-                'precio_unitario' => (float)($row['precio_unitario'] ?? ($prod->price ?? 0)),
-                'descuento'       => (float)($row['descuento'] ?? 0),
-                'iva_porcentaje'  => isset($row['iva_porcentaje']) ? (float)$row['iva_porcentaje'] : $ivaDefault,
-            ];
+            $itemsInput = [];
+            $ivaDefault = 16;
+            $items = is_array($parsed['items'] ?? null) ? $parsed['items'] : [];
+            foreach ($items as $row) {
+                $name = (string)($row['nombre'] ?? ($row['descripcion'] ?? ''));
+                $prod = $this->matchProduct($name);
+                $precioBase = 0.0;
+                if ($prod) {
+                    $precioBase = (float)($prod->price ?? $prod->precio ?? 0);
+                }
+
+                $itemsInput[] = [
+                    'producto_id'     => $prod?->id,
+                    'descripcion'     => $row['descripcion'] ?? $name,
+                    'cantidad'        => (float)($row['cantidad'] ?? 1),
+                    'precio_unitario' => (float)($row['precio_unitario'] ?? $precioBase),
+                    'descuento'       => (float)($row['descuento'] ?? 0),
+                    'iva_porcentaje'  => isset($row['iva_porcentaje']) ? (float)$row['iva_porcentaje'] : $ivaDefault,
+                ];
+            }
+
+            return response()->json([
+                'ok'                 => true,
+                'ocr_used'           => $wasOcred,
+                'ai_reason'          => $find['reasoning'] ?? null,
+                'relevant_pages'     => $relevantPages,
+                'cliente_id'         => $clienteId,
+                'cliente_match_name' => $clienteId ? $this->displayClient($clienteId) : null,
+                'moneda'             => $parsed['moneda'] ?? 'MXN',
+                'notas'              => $parsed['notas'] ?? null,
+                'validez_dias'       => $parsed['validez_dias'] ?? 15,
+                'envio'              => $parsed['envio'] ?? 0,
+                'descuento'          => $parsed['descuento_global'] ?? 0,
+                'items'              => $itemsInput,
+                'debug_campos'       => $parsed['campos_detectados'] ?? null,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('AI_PARSE_PDF', ['msg'=>$e->getMessage(),'file'=>$e->getFile(),'line'=>$e->getLine()]);
+            // Mensaje claro si falta la librería
+            if (str_contains($e->getMessage(), 'Smalot\\PdfParser\\Parser')) {
+                return response()->json([
+                    'ok'    => false,
+                    'error' => 'Falta smalot/pdfparser. Instala con: composer require smalot/pdfparser',
+                ], 500);
+            }
+            return response()->json(['ok'=>false,'error'=>$e->getMessage()], 500);
         }
-
-        return response()->json([
-            'ok' => true,
-            'ocr_used' => $wasOcred,
-            'ai_reason' => $find['reasoning'] ?? null,
-            'relevant_pages' => $relevantPages,
-            'cliente_id' => $clienteId,
-            'cliente_match_name' => $clienteId ? $this->displayClient($clienteId) : null,
-            'moneda' => $parsed['moneda'] ?? 'MXN',
-            'notas' => $parsed['notas'] ?? null,
-            'validez_dias' => $parsed['validez_dias'] ?? 15,
-            'envio' => $parsed['envio'] ?? 0,
-            'descuento' => $parsed['descuento_global'] ?? 0,
-            'items' => $itemsInput,
-            'debug_campos' => $parsed['campos_detectados'] ?? null,
-        ]);
     }
 
-    /* ==================== Helpers IA ==================== */
+    /* ==================== Helpers IA / PDF ==================== */
 
-    // Extrae texto por página; intenta OCR si no hay texto
+    // Extrae texto por página; usa OCR de ser necesario si existe ocrmypdf
     private function extractPdfPagesText(string $path): array
     {
+        if (!is_file($path)) {
+            throw new \RuntimeException("PDF no encontrado en: {$path}");
+        }
+        if (!class_exists(\Smalot\PdfParser\Parser::class)) {
+            throw new \RuntimeException("Dependencia faltante: smalot/pdfparser");
+        }
+
         $parser = new PdfParser();
-        $pages = $parser->parseFile($path)->getPages();
+
+        // 1) Intento directo
+        $pdf   = $parser->parseFile($path);
+        $pages = $pdf->getPages();
         $texts = array_map(fn($p) => $p->getText() ?? '', $pages);
 
         $hasText = array_reduce($texts, fn($c,$t) => $c || (trim($t) !== ''), false);
         if ($hasText) return [$texts, false];
 
-        // Fallback OCR (si ocrmypdf está instalado)
+        // 2) Fallback OCR (si existe ocrmypdf en el servidor)
         $tmpOcr = sys_get_temp_dir() . '/ocr_' . uniqid() . '.pdf';
         try {
             $proc = new Process(['ocrmypdf', '--force-ocr', '--skip-text', '--quiet', $path, $tmpOcr]);
             $proc->setTimeout(120);
             $proc->run();
+
             if ($proc->isSuccessful() && file_exists($tmpOcr)) {
-                $pages2 = $parser->parseFile($tmpOcr)->getPages();
+                $pdf2   = $parser->parseFile($tmpOcr);
+                $pages2 = $pdf2->getPages();
                 $texts2 = array_map(fn($p) => $p->getText() ?? '', $pages2);
                 @unlink($tmpOcr);
-                return [$texts2, true];
+
+                $hasText2 = array_reduce($texts2, fn($c,$t) => $c || (trim($t) !== ''), false);
+                if ($hasText2) return [$texts2, true];
             }
         } catch (\Throwable $e) {
-            // sin OCR continuamos con lo que haya
+            // Si no hay OCR o falla, continuamos sin tronarlo
+            Log::info('OCR fallback no disponible o falló', ['msg'=>$e->getMessage()]);
         }
+
+        // 3) Si no hay texto, regresamos lo que haya
         return [$texts, false];
     }
 
@@ -577,7 +622,10 @@ PR;
     private function callOpenAIJson(string $prompt): ?string
     {
         $key = env('OPENAI_API_KEY');
-        if (!$key) return null;
+        if (!$key) {
+            Log::warning('OPENAI_API_KEY no configurado');
+            return null;
+        }
 
         $payload = [
             'model' => 'gpt-4o-mini', // puedes subir a gpt-4.1 si quieres más calidad
@@ -600,10 +648,18 @@ PR;
             CURLOPT_TIMEOUT => 90,
         ]);
         $res = curl_exec($ch);
-        if ($res === false) return null;
+        if ($res === false) {
+            Log::error('OpenAI CURL error', ['err'=>curl_error($ch)]);
+            curl_close($ch);
+            return null;
+        }
         $code = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);
-        if ($code >= 300) return null;
+
+        if ($code >= 300) {
+            Log::error('OpenAI HTTP error', ['status'=>$code, 'body'=>$res]);
+            return null;
+        }
 
         $obj = json_decode($res, true);
         return $obj['choices'][0]['message']['content'] ?? null;
@@ -613,7 +669,8 @@ PR;
     {
         if (!$raw) return [];
         $raw = trim($raw);
-        $raw = preg_replace('/^```json|```$/m', '', $raw); // quitar fences si ocurriera
+        // quitar fences si el modelo los devuelve
+        $raw = preg_replace('/^```json|```$/m', '', $raw);
         $data = json_decode($raw, true);
         return is_array($data) ? $data : [];
     }
@@ -639,27 +696,57 @@ PR;
         return "ID {$c->id}";
     }
 
+    /**
+     * Empareja un cliente por nombre/email/teléfono con selección de columnas dinámica.
+     */
     private function matchClientId(?string $nombre, ?string $email, ?string $tel): ?int
     {
+        // Construir columnas existentes
+        $want = ['id','name','nombre','razon_social','email','telefono','phone'];
+        $cols = ['id'];
+        foreach ($want as $c) {
+            if ($c !== 'id' && Schema::hasColumn('clients', $c)) {
+                $cols[] = $c;
+            }
+        }
+        $cols = array_values(array_unique($cols));
+
+        $clients = Client::query()->select($cols)->get();
+
+        // Normalizaciones
         $normName  = $this->normalize($nombre ?? '');
         $normEmail = $this->normalize($email ?? '');
         $normTel   = preg_replace('/\D+/', '', (string)$tel);
 
         $bestId = null; $best = 0;
 
-        foreach (Client::all(['id','name','nombre','razon_social','email','telefono','phone']) as $c) {
+        foreach ($clients as $c) {
             $score = 0;
 
-            $candName = $this->normalize($c->name ?? $c->nombre ?? $c->razon_social ?? '');
+            $candName = $this->normalize(
+                ($c->name ?? null)
+                ?? ($c->nombre ?? null)
+                ?? ($c->razon_social ?? null)
+                ?? ''
+            );
             if ($normName && $candName) {
                 similar_text($normName, $candName, $pct);
-                $score += $pct;
+                $score += $pct; // ~0..100
             }
 
-            $candEmail = $this->normalize($c->email ?? '');
-            if ($normEmail && $candEmail && $normEmail === $candEmail) $score += 40;
+            $candEmail = '';
+            if (in_array('email', $cols, true)) {
+                $candEmail = $this->normalize($c->email ?? '');
+                if ($normEmail && $candEmail && $normEmail === $candEmail) $score += 40;
+            }
 
-            $candTel = preg_replace('/\D+/', '', (string)($c->telefono ?? $c->phone ?? ''));
+            $candTel = '';
+            if (in_array('telefono', $cols, true)) {
+                $candTel = preg_replace('/\D+/', '', (string)$c->telefono);
+            }
+            if (!$candTel && in_array('phone', $cols, true)) {
+                $candTel = preg_replace('/\D+/', '', (string)$c->phone);
+            }
             if ($normTel && $candTel && str_ends_with($candTel, $normTel)) $score += 25;
 
             if ($score > $best) { $best = $score; $bestId = $c->id; }
@@ -668,17 +755,36 @@ PR;
         return $best >= 55 ? $bestId : null;
     }
 
+    /**
+     * Empareja un producto por nombre/desc con selección de columnas dinámica.
+     */
     private function matchProduct(string $name): ?Product
     {
         $n = $this->normalize($name);
         if ($n === '') return null;
 
-        $all = Product::select(['id','name','nombre','descripcion','price','precio'])->get();
+        // Selección dinámica
+        $want = ['id','name','nombre','descripcion','price','precio'];
+        $cols = ['id'];
+        foreach ($want as $c) {
+            if ($c !== 'id' && Schema::hasColumn('products', $c)) {
+                $cols[] = $c;
+            }
+        }
+        $cols = array_values(array_unique($cols));
+
+        $all = Product::query()->select($cols)->get();
 
         $best = null; $bestScore = 0;
         foreach ($all as $p) {
-            $label = $this->normalize($p->name ?? $p->nombre ?? $p->descripcion ?? '');
+            $label = $this->normalize(
+                ($p->name ?? null)
+                ?? ($p->nombre ?? null)
+                ?? ($p->descripcion ?? null)
+                ?? ''
+            );
             if ($label === '') continue;
+
             similar_text($n, $label, $pct);
             if ($pct > $bestScore) { $bestScore = $pct; $best = $p; }
         }

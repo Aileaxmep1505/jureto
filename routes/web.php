@@ -9,6 +9,8 @@ use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CotizacionController;
 use App\Http\Controllers\VentaController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\MediaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,3 +111,13 @@ Route::post('/cotizaciones/ai-parse', [CotizacionController::class, 'aiParse'])
     ->name('cotizaciones.ai_parse');
 Route::get('/cotizaciones/auto', [\App\Http\Controllers\CotizacionController::class, 'autoForm'])->name('cotizaciones.auto.form');
 Route::post('/cotizaciones/auto', [\App\Http\Controllers\CotizacionController::class, 'autoCreate'])->name('cotizaciones.auto.create');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/perfil', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/perfil/foto', [ProfileController::class, 'updatePhoto'])->name('profile.update.photo');
+    Route::put('/perfil/password', [ProfileController::class, 'updatePassword'])->name('profile.update.password');
+});
+// Ruta pública para servir archivos de storage/app/public
+Route::get('/media/{path}', [MediaController::class, 'show'])
+    ->where('path', '.*')
+    ->name('media.show');
