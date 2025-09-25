@@ -7,6 +7,9 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CotizacionController;
+use App\Http\Controllers\VentaController;
+
 /*
 |--------------------------------------------------------------------------
 | Invitados
@@ -92,3 +95,17 @@ Route::middleware(['auth','approved'])->group(function () {
 Route::middleware(['auth','approved'])->group(function () {
     Route::resource('clients', ClientController::class)->names('clients');
 });
+
+Route::resource('cotizaciones', CotizacionController::class);
+
+Route::post('cotizaciones/{cotizacion}/aprobar', [CotizacionController::class,'aprobar'])->name('cotizaciones.aprobar');
+Route::post('cotizaciones/{cotizacion}/rechazar', [CotizacionController::class,'rechazar'])->name('cotizaciones.rechazar');
+Route::get('cotizaciones/{cotizacion}/pdf', [CotizacionController::class,'pdf'])->name('cotizaciones.pdf');
+Route::post('cotizaciones/{cotizacion}/convertir-venta', [CotizacionController::class,'convertirAVenta'])->name('cotizaciones.convertir');
+Route::resource('ventas', VentaController::class)->only(['index','show']);
+
+// routes/web.php
+Route::post('/cotizaciones/ai-parse', [CotizacionController::class, 'aiParse'])
+    ->name('cotizaciones.ai_parse');
+Route::get('/cotizaciones/auto', [\App\Http\Controllers\CotizacionController::class, 'autoForm'])->name('cotizaciones.auto.form');
+Route::post('/cotizaciones/auto', [\App\Http\Controllers\CotizacionController::class, 'autoCreate'])->name('cotizaciones.auto.create');

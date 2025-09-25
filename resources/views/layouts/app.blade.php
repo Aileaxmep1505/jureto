@@ -62,7 +62,7 @@
       </a>
       @endrole
 
-      <!-- Productos (un solo enlace, sin submenú) -->
+      <!-- Productos -->
       <a href="{{ route('products.index') }}" class="nav__link {{ request()->routeIs('products.*') ? 'is-active':'' }}">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
           <rect x="3" y="4" width="18" height="14" rx="2"/>
@@ -71,7 +71,7 @@
         <span>Productos</span>
       </a>
 
-      <!-- Proveedores (un solo enlace) -->
+      <!-- Proveedores -->
       <a href="{{ route('providers.index') }}" class="nav__link {{ request()->routeIs('providers.*') ? 'is-active':'' }}">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
           <path d="M3 7h18l-2 10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3L3 7z"/>
@@ -80,13 +80,39 @@
         <span>Proveedores</span>
       </a>
 
-      <!-- Clientes (un solo enlace) -->
+      <!-- Clientes -->
       <a href="{{ route('clients.index') }}" class="nav__link {{ request()->routeIs('clients.*') ? 'is-active':'' }}">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8">
           <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
         </svg>
         <span>Clientes</span>
+      </a>
+
+      <!-- Cotizaciones (lista) -->
+      <a href="{{ route('cotizaciones.index') }}" class="nav__link {{ request()->routeIs('cotizaciones.*') && !request()->routeIs('cotizaciones.create') ? 'is-active':'' }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="14" rx="2"/>
+          <path d="M7 8h10M7 12h10M7 16h6"/>
+        </svg>
+        <span>Cotizaciones</span>
+      </a>
+
+      <!-- Nueva cotización -->
+      <a href="{{ route('cotizaciones.create') }}" class="nav__link {{ request()->routeIs('cotizaciones.create') ? 'is-active':'' }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        <span>Nueva cotización</span>
+      </a>
+
+      <!-- Ventas -->
+      <a href="{{ route('ventas.index') }}" class="nav__link {{ request()->routeIs('ventas.*') ? 'is-active':'' }}">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="1.8" aria-hidden="true">
+          <path d="M3 7h18l-2 10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3L3 7z"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+        <span>Ventas</span>
       </a>
     </nav>
 
@@ -218,7 +244,7 @@
         closeNotif();
       });
 
-      // Click-away para notificaciones (sin usar backdrop)
+      // Click-away para notificaciones
       document.addEventListener('click', (e)=>{
         const withinPanel = notifPane.contains(e.target);
         const withinButton = notifBtn.contains(e.target);
